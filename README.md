@@ -191,6 +191,21 @@ dotnet build src/PKForge.App/PKForge.App.csproj -f net10.0-android
 
 Version tags build and publish the APK from CI.
 
+### Linux and SteamOS (preview)
+
+The desktop build runs on the [Avalonia MAUI backend](https://github.com/AvaloniaUI/Avalonia.Controls.Maui)
+(a preview). It needs the .NET 11 SDK with the `maui-tizen` workload, which carries MAUI's
+Linux build targets.
+
+```bash
+dotnet publish src/PKForge.App/PKForge.App.csproj -p:PKForgeDesktop=true \
+  -c Release -r linux-x64 --self-contained -o packaging/linux/pkforge-linux-x64
+flatpak-builder --user --install --force-clean build-dir packaging/linux/org.pkforge.app.yml
+```
+
+Run `pkforge.sh` from the publish folder, or the Flatpak as `org.pkforge.app`. Set
+`PKFORGE_SCALE=2` if the UI is too small on a high-resolution screen.
+
 ### Layout
 
 ```

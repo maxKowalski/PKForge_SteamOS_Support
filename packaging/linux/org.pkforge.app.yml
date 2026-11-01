@@ -1,0 +1,57 @@
+# Flatpak for Linux and SteamOS. Packages the self-contained publish of the desktop build:
+#   dotnet publish src/PKForge.App/PKForge.App.csproj -p:PKForgeDesktop=true -c Release \
+#     -r linux-x64 --self-contained -o packaging/linux/pkforge-linux-x64
+#   flatpak-builder --user --install --force-clean build-dir packaging/linux/org.pkforge.app.yml
+id: org.pkforge.app
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: pkforge
+finish-args:
+  # Avalonia draws through X11 (XWayland under gamescope and Plasma).
+  - --socket=x11
+  - --share=ipc
+  # The GPU, and game controllers read through SDL.
+  - --device=all
+  # Sprite add-ons, update checks.
+  - --share=network
+  # Emulator data the save finder looks in (src/PKForge.Infrastructure/LinuxEmulatorLocations.cs).
+  - --filesystem=xdg-config/retroarch
+  - --filesystem=~/.var/app/org.libretro.RetroArch
+  - --filesystem=~/.local/share/Steam/steamapps/common/RetroArch
+  - --filesystem=xdg-data/dolphin-emu
+  - --filesystem=~/.var/app/org.DolphinEmu.dolphin-emu
+  - --filesystem=xdg-data/azahar-emu
+  - --filesystem=~/.var/app/org.azahar_emu.Azahar
+  - --filesystem=xdg-data/lime3ds-emu
+  - --filesystem=xdg-data/citra-emu
+  - --filesystem=xdg-data/eden
+  - --filesystem=~/.var/app/dev.eden_emu.eden
+  - --filesystem=~/Emulation
+  - --filesystem=~/retrodeck
+  # SD cards on SteamOS, where EmuDeck can keep its saves.
+  - --filesystem=/run/media
+  # Where shared files are exported (Desktop/DesktopEssentials.cs: Share).
+  - --filesystem=xdg-documents/PKForge:create
+modules:
+  - name: pkforge
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/lib/pkforge
+      - cp -r pkforge-linux-x64/. /app/lib/pkforge/
+      - chmod +x /app/lib/pkforge/PKForge.App /app/lib/pkforge/pkforge.sh
+      - mkdir -p /app/bin
+      - ln -s /app/lib/pkforge/pkforge.sh /app/bin/pkforge
+      - install -Dm644 org.pkforge.app.desktop /app/share/applications/org.pkforge.app.desktop
+      - install -Dm644 org.pkforge.app.metainfo.xml /app/share/metainfo/org.pkforge.app.metainfo.xml
+      - install -Dm644 org.pkforge.app.png /app/share/icons/hicolor/128x128/apps/org.pkforge.app.png
+    sources:
+      - type: dir
+        path: pkforge-linux-x64
+        dest: pkforge-linux-x64
+      - type: file
+        path: org.pkforge.app.desktop
+      - type: file
+        path: org.pkforge.app.metainfo.xml
+      - type: file
+        path: org.pkforge.app.png

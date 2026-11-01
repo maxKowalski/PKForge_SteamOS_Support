@@ -123,7 +123,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISecondaryDisplayHost, NoSecondaryDisplay>();
         builder.Services.AddSingleton<IEmulatorDetectionService, DesktopEmulatorScanner>();
 #endif
+#if ANDROID
         builder.Services.AddSingleton<IWatchedRootStore, PreferencesWatchedRootStore>();
+#else
+        builder.Services.AddSingleton<PreferencesWatchedRootStore>();
+        builder.Services.AddSingleton<IWatchedRootStore, DesktopWatchedRootStore>();
+#endif
         builder.Services.AddSingleton<BoxBrowserViewModel>();
         builder.Services.AddSingleton<IBoxPager>(sp => sp.GetRequiredService<BoxBrowserViewModel>());
         builder.Services.AddTransient<BoxBrowserPage>();

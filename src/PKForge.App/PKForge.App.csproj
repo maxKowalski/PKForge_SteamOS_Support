@@ -20,6 +20,8 @@
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <!-- Desktop reads its version from the assembly (Desktop/DesktopEssentials.cs: AppInfo). -->
     <Version>$(ApplicationDisplayVersion)</Version>
+    <!-- Desktop/DesktopGamepad.cs calls SDL2 through LibraryImport. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- SkiaSharp.Views.Maui trimming warnings, as in Avalonia's own samples. -->
     <NoWarn>$(NoWarn);IL2104;IL2026</NoWarn>
   </PropertyGroup>
@@ -51,6 +53,8 @@
     <PackageReference Include="Avalonia.Controls.Maui.Desktop" Version="11.0.0-rc.3.26301.1434" />
     <PackageReference Include="Avalonia.Controls.Maui.Essentials" Version="11.0.0-rc.3.26301.1434" />
     <PackageReference Include="Avalonia.Controls.Maui.SkiaSharp.Views" Version="11.0.0-rc.3.26301.1434" />
+    <!-- libSDL2 for game controllers (zlib licence), from Silk.NET's native build. -->
+    <PackageReference Include="Ultz.Native.SDL" Version="2.32.10" />
   </ItemGroup>
   <ItemGroup Condition="'$(PKForgeDesktop)' != 'true'">
     <!-- Desktop-only platform services. -->

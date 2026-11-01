@@ -7,7 +7,8 @@ namespace PKForge.App;
 
 /// <summary>
 /// Desktop window behaviour: fullscreen in SteamOS Game Mode (maximized on a desktop, F11
-/// toggles), and the keyboard as a gamepad so Steam Input's keyboard templates drive the app.
+/// toggles), game controllers through SDL (<see cref="DesktopGamepad"/>), and the keyboard as
+/// a gamepad too.
 /// Keys follow RetroArch's defaults: arrows, X = A, Z = B, S = X, A = Y, Q/W = L/R,
 /// Enter = Start, Right Shift = Select, plus Escape/Backspace = B.
 /// </summary>
@@ -22,6 +23,7 @@ internal static class DesktopWindowSetup
             main.WindowState = InGameMode() ? WindowState.FullScreen : WindowState.Maximized;
             main.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
             main.AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
+            DesktopGamepad.Start(window.Dispatcher);
         };
 
     /// <summary>Steam's Game Mode runs apps inside gamescope, which sets these.</summary>
