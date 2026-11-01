@@ -144,6 +144,7 @@ public sealed class HomePage : ContentPage, IPadHandler
     /// </summary>
     private static void BlockNativeFocus(View view)
     {
+#if ANDROID
         view.HandlerChanged += (_, _) =>
         {
             if (view.Handler?.PlatformView is Android.Views.View platform)
@@ -152,6 +153,7 @@ public sealed class HomePage : ContentPage, IPadHandler
                 platform.FocusableInTouchMode = false;
             }
         };
+#endif
     }
 
     /// <summary>
@@ -163,6 +165,7 @@ public sealed class HomePage : ContentPage, IPadHandler
     /// </summary>
     private static void AttachPress(View view, Action onTap, Action onLongPress)
     {
+#if ANDROID
         view.HandlerChanged += (_, _) =>
         {
             if (view.Handler?.PlatformView is not Android.Views.View platform) return;
@@ -206,6 +209,45 @@ public sealed class HomePage : ContentPage, IPadHandler
                 e.Handled = true;
             };
         };
+#else
+        // Desktop: the same tap / long-press split from MAUI pointer events (mouse or touch).
+        const double slop = 12;
+        var timeout = TimeSpan.FromMilliseconds(500);
+        var token = 0;
+        var pressing = false;
+        Point down = default;
+        var pointer = new PointerGestureRecognizer();
+        pointer.PointerPressed += (_, e) =>
+        {
+            var pressed = ++token;
+            pressing = true;
+            down = e.GetPosition(view) ?? default;
+            view.Dispatcher.DispatchDelayed(timeout, () =>
+            {
+                if (pressed != token || !pressing) return;
+                pressing = false;
+                onLongPress();
+            });
+        };
+        pointer.PointerMoved += (_, e) =>
+        {
+            if (!pressing || e.GetPosition(view) is not { } at) return;
+            if (Math.Abs(at.X - down.X) > slop || Math.Abs(at.Y - down.Y) > slop)
+                pressing = false;
+        };
+        pointer.PointerReleased += (_, _) =>
+        {
+            token++;
+            if (pressing) onTap();
+            pressing = false;
+        };
+        pointer.PointerExited += (_, _) =>
+        {
+            token++;
+            pressing = false;
+        };
+        view.GestureRecognizers.Add(pointer);
+#endif
     }
 
     // Once per launch, not per page: a color scheme change rebuilds Home, and the new page
@@ -713,7 +755,11 @@ public sealed class HomePage : ContentPage, IPadHandler
         }
         catch (Exception error)
         {
+#if ANDROID
             Android.Util.Log.Warn("PKForgeUpdate", $"Automatic update check failed: {error}");
+#else
+            AppLog.Warn("update", $"Automatic update check failed: {error}");
+#endif
             if (!automatic)
                 _viewModel.Status = $"Update check failed: {error.Message}";
             return;
@@ -769,7 +815,11 @@ public sealed class HomePage : ContentPage, IPadHandler
         }
         catch (Exception error)
         {
+#if ANDROID
             Android.Util.Log.Error("PKForgeUpdate", $"Download/install failed: {error}");
+#else
+            AppLog.Error("update", "Download/install failed", error);
+#endif
             _viewModel.Status = $"Update failed: {error.Message}";
             var openRelease = await PadMenu.ConfirmAsync(_hostGrid, "Open the release page?",
                 "The in-app installer could not finish. The GitHub release page has the same APK.", "Open");

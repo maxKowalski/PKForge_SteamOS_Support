@@ -14,14 +14,26 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+#if ANDROID
         // First thing: every crash from here on leaves a report the player can share.
         Services.AppLog.Install();
+#else
+        DesktopPaths.UseXdgDataHome();
+#endif
         var builder = MauiApp.CreateBuilder();
         App.Trace("CreateMauiApp enter");
 #if ANDROID
         Views.CapsuleSkin.Register();
 #endif
-        builder.UseMauiApp<App>().UseSkiaSharp()
+        builder.UseMauiApp<App>()
+#if ANDROID
+            .UseSkiaSharp()
+#else
+            // Linux/SteamOS: every control is drawn by Avalonia instead of a native toolkit.
+            .UseAvaloniaApp()
+            .UseAvaloniaEssentials()
+            .UseAvaloniaSkiaSharp()
+#endif
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("MPLUSRounded1c-Regular.ttf", "Rounded");
@@ -31,6 +43,10 @@ public static class MauiProgram
                 // Best displayed at font-size 16 or multiples (it is a pixel font).
                 fonts.AddFont("NDS12.ttf", "PixelUI");
             });
+#if !ANDROID
+        // The log lives in FileSystem.AppDataDirectory, which exists once Essentials is set up.
+        Services.AppLog.Install();
+#endif
         builder.Services.AddSingleton<ISaveEngine, SaveEngine>();
         builder.Services.AddSingleton<IGameDataService, GameDataService>();
         builder.Services.AddSingleton<TrainerProfileStore>();
@@ -96,6 +112,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<IFolderPicker, AndroidFolderPicker>();
         builder.Services.AddSingleton<IFolderFileAccess, AndroidFolderFileAccess>();
         builder.Services.AddSingleton<IEmulatorDetectionService, AndroidEmulatorScanner>();
+#else
+        builder.Services.AddSingleton<DesktopFileAccess>();
+        builder.Services.AddSingleton<ISaveFileAccess>(sp => sp.GetRequiredService<DesktopFileAccess>());
+        builder.Services.AddSingleton<IFolderFileAccess>(sp => sp.GetRequiredService<DesktopFileAccess>());
+        builder.Services.AddSingleton<DesktopPickers>();
+        builder.Services.AddSingleton<IDocumentPicker>(sp => sp.GetRequiredService<DesktopPickers>());
+        builder.Services.AddSingleton<IFolderPicker>(sp => sp.GetRequiredService<DesktopPickers>());
+        builder.Services.AddSingleton<IMusicPlayer, SilentMusicPlayer>();
+        builder.Services.AddSingleton<ISecondaryDisplayHost, NoSecondaryDisplay>();
+        builder.Services.AddSingleton<IEmulatorDetectionService, DesktopEmulatorScanner>();
 #endif
         builder.Services.AddSingleton<IWatchedRootStore, PreferencesWatchedRootStore>();
         builder.Services.AddSingleton<BoxBrowserViewModel>();
