@@ -118,7 +118,8 @@ public abstract class EmulatorSaveScanner(ISaveEngine engine, IScanCacheStore ca
             found = kind switch
             {
                 EmulatorKind.RetroArch or EmulatorKind.MelonDS or EmulatorKind.Linkboy or
-                EmulatorKind.DraStic or EmulatorKind.PizzaBoyGba or EmulatorKind.PizzaBoyGbc or EmulatorKind.Dolphin =>
+                EmulatorKind.DraStic or EmulatorKind.PizzaBoyGba or EmulatorKind.PizzaBoyGbc or EmulatorKind.Dolphin or
+                EmulatorKind.MGba =>
                     ScanFlatFolder(tree, kind, cancellationToken, state, onSave),
                 EmulatorKind.Eden => ScanEden(tree, cancellationToken, state, onSave),
                 EmulatorKind.Azahar or EmulatorKind.CitraMmj => ScanThreeDs(tree, kind, cancellationToken, state, onSave),

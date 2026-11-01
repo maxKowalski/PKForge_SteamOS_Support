@@ -66,6 +66,22 @@ public sealed class EmulatorSaveScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task MGbaEmuDeckFolderReadsBatterySavesNotStates()
+    {
+        // EmuDeck: Emulation/saves/mgba/{saves,states}; linking the mgba folder prefers saves/.
+        var save = Write("mgba/saves/Pokemon Black.sav", BlackSave());
+        Write("mgba/states/Pokemon Black.ss1", [5, 5, 5]);
+        Write("mgba/states/Pokemon Black.sav", BlackSave());
+
+        var scanner = new TestScanner(new MemoryCache(), root => new FileSystemSaveTree(root));
+        var result = await scanner.ScanAsync(Path.Combine(_root, "mgba"), EmulatorKind.MGba);
+
+        var found = Assert.Single(result.Saves);
+        Assert.Equal(save, found.DocumentId);
+        Assert.Equal(EmulatorKind.MGba, found.Emulator);
+    }
+
+    [Fact]
     public async Task UnchangedFilesAreAnsweredFromTheCacheOnTheNextScan()
     {
         Write("saves/Pokemon Black.sav", BlackSave());

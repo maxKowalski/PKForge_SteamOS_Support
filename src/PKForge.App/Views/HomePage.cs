@@ -574,12 +574,18 @@ public sealed class HomePage : ContentPage, IPadHandler
                     new PadOption("RetroArch", IconPath: "retroarch"),
                     new PadOption("Linkboy", IconPath: "linkboy"),
                     new PadOption("Pizza Boy C (GB/GBC)", IconPath: "pizzaboy"),
+#if !ANDROID
+                    new PadOption("mGBA", IconPath: "storage"),
+#endif
                 },
                 "Game Boy Advance" => new[]
                 {
                     new PadOption("RetroArch", IconPath: "retroarch"),
                     new PadOption("Linkboy", IconPath: "linkboy"),
                     new PadOption("Pizza Boy A (GBA)", IconPath: "pizzaboy"),
+#if !ANDROID
+                    new PadOption("mGBA", IconPath: "storage"),
+#endif
                 },
                 "Nintendo DS" => new[]
                 {
@@ -605,6 +611,7 @@ public sealed class HomePage : ContentPage, IPadHandler
                 "Azahar / Lime3DS" => "Save in game and close the emulator. Select the user folder you chose in its setup (the one containing sdmc); sdmc, Nintendo 3DS or a folder above the user folder also work. Restart the game normally after editing.",
                 "Citra MMJ" => "Save in game and close Citra MMJ. In the file picker open the Citra MMJ entry (or Android/data/org.citra.emu/files) and select citra-emu, or /citra-emu on older Android. Restart the game normally after editing.",
                 "Eden" => "Save in game and close the emulator. Select its files root containing the emulated storage. Restart the game normally after editing.",
+                "mGBA" => "Save in game and close mGBA. Select its save folder (Settings, Paths, Save games; EmuDeck uses Emulation/saves/mgba/saves), or your ROM folder if saves sit beside the ROMs. Save states are not supported. Restart the game normally after editing.",
                 "melonDS" => "Save in game and close melonDS. Select the folder containing your .sav battery saves: next to your ROMs by default, or the save folder set in melonDS's settings. Save states are not supported. Restart the game normally after editing.",
                 _ => "Save in game and close the emulator. Select its saves folder (or the folder containing your battery saves). Save states are not supported. Restart the game normally after editing.",
             };
@@ -624,6 +631,7 @@ public sealed class HomePage : ContentPage, IPadHandler
                 case "DraStic": await _viewModel.AddDraSticCommand.ExecuteAsync(null); break;
                 case "Pizza Boy A (GBA)": await _viewModel.AddPizzaBoyGbaCommand.ExecuteAsync(null); break;
                 case "Pizza Boy C (GB/GBC)": await _viewModel.AddPizzaBoyGbcCommand.ExecuteAsync(null); break;
+                case "mGBA": await _viewModel.AddMGbaCommand.ExecuteAsync(null); break;
             }
             return;
         }
