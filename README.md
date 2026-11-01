@@ -158,7 +158,9 @@ Link a storage unit and PKForge finds your saves automatically:
 - **Nintendo 3DS:** Azahar, Lime3DS, Citra MMJ
 - **Nintendo Switch:** Eden
 
-You can also open a single save file directly.
+You can also open a single save file directly. On Linux and SteamOS, PKForge also links
+standalone mGBA and finds EmuDeck and RetroDECK saves: see
+[Linux and SteamOS](#linux-and-steamos-preview).
 
 ## Installation
 
@@ -169,6 +171,9 @@ opening a single save file.
 New to PKForge? Start with [Getting Started](https://github.com/sofianeelhor/PKForge/wiki/Getting-Started).
 If PKForge finds no saves, the folder picked is usually the wrong one: see
 [Choosing the right folder](https://github.com/sofianeelhor/PKForge/wiki/Choosing-the-Right-Folder).
+
+On Linux or SteamOS (a preview), build and install the Flatpak as described in
+[Linux and SteamOS](#linux-and-steamos-preview).
 
 ## 💬 Discord
 
@@ -193,18 +198,178 @@ Version tags build and publish the APK from CI.
 
 ### Linux and SteamOS (preview)
 
-The desktop build runs on the [Avalonia MAUI backend](https://github.com/AvaloniaUI/Avalonia.Controls.Maui)
-(a preview). It needs the .NET 11 SDK with the `maui-tizen` workload, which carries MAUI's
-Linux build targets.
+PKForge also builds as a Linux desktop app, tuned for SteamOS handhelds in Game Mode
+(tested on a Legion Go; the Steam Deck runs the same SteamOS). The desktop build runs the
+same MAUI app on the [Avalonia MAUI backend](https://github.com/AvaloniaUI/Avalonia.Controls.Maui),
+which is still a preview, so expect rough edges. Android builds are unaffected: the desktop target
+is opt-in with `-p:PKForgeDesktop=true`.
+
+#### Requirements
+
+- Linux x86_64 with glibc. Tested on SteamOS, Arch and Debian, and as a Flatpak on
+  Fedora; other desktop distributions should work too. The published build is
+  self-contained, so the machine that runs it needs no .NET.
+- To build: the **.NET 11 SDK** (a preview until .NET 11 ships) and the `maui-tizen`
+  workload, which carries MAUI's Linux build targets:
+
+  ```bash
+  dotnet workload install maui-tizen
+  ```
+
+- To package a Flatpak: `flatpak` and `flatpak-builder`, with Flathub added as a remote.
+- At runtime: an X11 session (Avalonia draws through X11; XWayland under Plasma and Game
+  Mode is fine) and the usual `libICE`, `libSM` and `fontconfig`, which desktop
+  distributions already have.
+
+#### Build
 
 ```bash
+git submodule update --init --recursive
 dotnet publish src/PKForge.App/PKForge.App.csproj -p:PKForgeDesktop=true \
   -c Release -r linux-x64 --self-contained -o packaging/linux/pkforge-linux-x64
-flatpak-builder --user --install --force-clean build-dir packaging/linux/org.pkforge.app.yml
 ```
 
-Run `pkforge.sh` from the publish folder, or the Flatpak as `org.pkforge.app`. Set
-`PKFORGE_SCALE=2` if the UI is too small on a high-resolution screen.
+The folder `packaging/linux/pkforge-linux-x64` is the whole app: run `./pkforge.sh` from
+it, or copy it anywhere. To share it as a single file, pack it on Linux so the executable
+bits survive:
+
+```bash
+tar -C packaging/linux -czf pkforge-linux-x64.tar.gz pkforge-linux-x64
+```
+
+No .NET 11 SDK on your machine? The build also runs in a container, for example
+`mcr.microsoft.com/dotnet/sdk:11.0` after `dotnet workload install maui-tizen`.
+
+#### Package and install the Flatpak
+
+The manifest at `packaging/linux/org.pkforge.app.yml` packages the published folder above,
+so publish first. It uses the freedesktop 25.08 runtime and grants access to the emulator
+folders PKForge looks in, plus `/run/media` for SD cards.
+
+To install straight from the build:
+
+```bash
+flatpak-builder --user --install --install-deps-from=flathub --force-clean \
+  build-dir packaging/linux/org.pkforge.app.yml
+```
+
+To make a single `PKForge.flatpak` file to copy to another device:
+
+```bash
+flatpak-builder --repo=repo --install-deps-from=flathub --force-clean \
+  build-dir packaging/linux/org.pkforge.app.yml
+flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
+  repo PKForge.flatpak org.pkforge.app
+```
+
+Then, on the device:
+
+```bash
+flatpak install --user PKForge.flatpak   # fetches the runtime from Flathub the first time
+flatpak run org.pkforge.app
+```
+
+`.github/workflows/build.yml` has jobs that build the tarball and the Flatpak on each
+push and attach both to tagged releases. They are new, so until they have run, build
+locally as above.
+
+#### SteamOS (Steam Deck, Legion Go)
+
+1. Switch to Desktop Mode (Steam button → Power → Switch to Desktop).
+2. Copy `PKForge.flatpak` to the device, for example to Downloads with a USB stick, or over
+   the network from Dolphin (`smb://your-pc/your-share`).
+3. In Konsole, run `flatpak install --user ~/Downloads/PKForge.flatpak`. `--user` needs no
+   password. When updating, answer `y` to reinstall.
+4. Add it to Steam: right-click PKForge in the app menu and choose **Add to Steam**, or in
+   Steam use **Games → Add a Non-Steam Game**.
+5. Return to Game Mode and launch it from your library.
+
+Use PKForge in **Game Mode**. There, Steam hands the controller to PKForge as a gamepad.
+In Desktop Mode, Steam's desktop controller layout turns the controller into keyboard and
+mouse input instead, so the controller only partly works there. Touch and a mouse work in
+both.
+
+If the UI looks tiny on a high-resolution screen (such as the Legion Go's 2560×1600), set
+a scale once:
+
+```bash
+flatpak override --user --env=PKFORGE_SCALE=2 org.pkforge.app
+```
+
+To update, install the new `PKForge.flatpak` the same way: linked folders, the Bank and
+settings are kept. To remove it, run `flatpak uninstall --user org.pkforge.app`. Its data
+stays in `~/.var/app/org.pkforge.app` until you delete it.
+
+#### Linking emulators on Linux
+
+On first launch, PKForge links the emulator folders it finds, once each. Unlinking one
+keeps it unlinked.
+
+| Emulator | Folders it looks in |
+| --- | --- |
+| RetroArch | `~/.config/retroarch`, Flatpak `~/.var/app/org.libretro.RetroArch/config/retroarch`, Steam `~/.local/share/Steam/steamapps/common/RetroArch` |
+| Dolphin | `~/.local/share/dolphin-emu`, Flatpak `~/.var/app/org.DolphinEmu.dolphin-emu/data/dolphin-emu` |
+| Azahar, Lime3DS, Citra | `~/.local/share/azahar-emu`, `lime3ds-emu`, `citra-emu`, Flatpak `~/.var/app/org.azahar_emu.Azahar/data/azahar-emu` |
+| Eden | `~/.local/share/eden`, Flatpak `~/.var/app/dev.eden_emu.eden/data/eden` |
+| EmuDeck | `~/Emulation/saves/retroarch`, `melonds`, `dolphin`, `azahar`, `citra`, `eden` |
+| RetroDECK | `~/retrodeck/saves` |
+
+Symlinks are resolved, so an EmuDeck link into an emulator folder that is already linked
+isn't listed twice. Anything else, such as an SD card or a custom folder, is linked by
+hand: **Y (Link)** → platform → emulator → **Choose folder**.
+
+**mGBA** (desktop only) is always linked by hand: **Link → Game Boy Advance** (or **Game
+Boy / Game Boy Color**) **→ mGBA**, then pick its save folder. EmuDeck sets that to
+`Emulation/saves/mgba/saves`, on internal storage (`~/Emulation`) or the SD card
+(`/run/media/…/Emulation`). If mGBA has no save folder set, pick your ROM folder.
+
+As on Android, save in game and close the emulator before editing, then load the save
+normally afterwards, not a save state.
+
+#### Controls on Linux
+
+- **Controller**: read through SDL2, which is how Steam Input passes the controller in
+  Game Mode. The d-pad and left stick navigate with the same repeat timing as Android, and
+  the right stick moves the Poképark camera.
+- **Touch and mouse**: tap to select, and drag a list to scroll. Game Mode delivers the
+  touchscreen as a mouse, which is why PKForge scrolls on mouse drags.
+- **Keyboard** (RetroArch's defaults): arrows to move, X = A, Z / Escape / Backspace = B,
+  S = X, A = Y, Q / W = L / R, Enter = Start, Right Shift = Select, and F11 toggles
+  fullscreen.
+
+#### Options
+
+| Variable | Effect |
+| --- | --- |
+| `PKFORGE_SCALE=2` | Scales the whole UI. Any factor works, such as `1.5`. |
+| `PKFORGE_FULLSCREEN=1` | Starts fullscreen outside Game Mode too. In Game Mode it always is. |
+
+For the Flatpak, set them with `flatpak override --user --env=NAME=VALUE org.pkforge.app`.
+For the folder build, set them before `./pkforge.sh`.
+
+#### Where things are
+
+| | Flatpak | Folder build |
+| --- | --- | --- |
+| Bank, backups, settings | `~/.var/app/org.pkforge.app/data/PKForge.App` | `~/.local/share/PKForge.App` |
+| Log | `…/PKForge.App/logs/pkforge.log` | `…/PKForge.App/logs/pkforge.log` |
+| Shared and exported files | `~/Documents/PKForge` | `~/Documents/PKForge` |
+
+#### Not available on Linux yet
+
+- Background music, and the Bad Apple easter egg's sound (it plays silently).
+- The second-screen inspector, the Poképark home-screen widget, and in-app updates (update
+  the Flatpak instead).
+- Sharing opens `~/Documents/PKForge` in the file manager instead of a share sheet.
+
+#### Troubleshooting
+
+- **No saves found**: check that the folder is one the Flatpak can read (the table above,
+  `~/Emulation`, `~/retrodeck` or `/run/media`), or link it by hand with the picker.
+- **The controller does nothing**: use Game Mode, and check the log for a
+  `Controller connected` line (`grep pad …/logs/pkforge.log`).
+- **The UI is tiny**: set `PKFORGE_SCALE`.
+- **Anything else**: attach the log to your bug report.
 
 ### Layout
 
@@ -214,8 +379,10 @@ src/PKForge.Engine          adapters over pinned PKHeX.Core
 src/PKForge.AutoMod         compiles the Auto Legality Mod against our Core
 src/PKForge.Infrastructure  bank, backups, atomic save writer
 src/PKForge.App             MAUI app, SkiaSharp UI, gamepad and second screen
+src/PKForge.App/Desktop     Linux/SteamOS platform services (Avalonia MAUI backend)
 src/PKForge.Chrome          the design system: tokens and painters, pure Skia
 tools/ChromePreview         renders the design system off-device
+packaging/linux             Flatpak manifest, desktop entry, metainfo and icon
 docs/                       architecture, bank model, development, art direction
 ```
 
@@ -243,6 +410,10 @@ docs/                       architecture, bank model, development, art direction
 - [game-icons.net](https://game-icons.net) (CC-BY 3.0, © Lorc, Delapouite, Guard13007,
   Carl Olsen and other contributing artists), UI symbols
 - [Bulbagarden Archives](https://archives.bulbagarden.net), Pokérus status sprites
+- [Avalonia](https://avaloniaui.net) and its [MAUI backend](https://github.com/AvaloniaUI/Avalonia.Controls.Maui)
+  (MIT), which draw the Linux build
+- [SDL](https://www.libsdl.org) (zlib), game controllers on Linux, bundled from
+  [Silk.NET's native build](https://github.com/dotnet/Silk.NET)
 - Sprites and Pokémon names © Nintendo, Creatures Inc., GAME FREAK inc.
 
 ## License
