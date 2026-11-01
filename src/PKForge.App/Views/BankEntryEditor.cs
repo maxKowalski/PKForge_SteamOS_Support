@@ -549,7 +549,7 @@ public static class BankEntryEditor
             var current = _slots[_focus];
             current.Target.SetFocused(true);
             if (current.Column == 1 && _scroll.Handler is not null)
-                _ = _scroll.ScrollToAsync(current.View, ScrollToPosition.MakeVisible, false);
+                _scroll.MakeVisible(current.View);
         }
 
         private void Close(bool result)

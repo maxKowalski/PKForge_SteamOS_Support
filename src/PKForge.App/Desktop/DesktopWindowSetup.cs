@@ -24,6 +24,7 @@ internal static class DesktopWindowSetup
             main.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
             main.AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
             DesktopGamepad.Start(window.Dispatcher);
+            DesktopDragScroll.Attach(main);
         };
 
     /// <summary>Steam's Game Mode runs apps inside gamescope, which sets these.</summary>
