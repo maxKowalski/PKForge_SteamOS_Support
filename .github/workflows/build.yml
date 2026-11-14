@@ -2,9 +2,10 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [main, linux-trial, 'claude/**']
     tags: ['v*']
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-and-build:
