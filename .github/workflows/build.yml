@@ -116,7 +116,7 @@ jobs:
         with:
           name: pkforge-linux-x64
           path: pkforge-linux-x64.tar.gz
-          retention-days: 3
+          retention-days: 30  # the Steam Deck guide downloads it from here
       - name: Stage release asset
         if: github.ref_type == 'tag'
         run: cp pkforge-linux-x64.tar.gz "PKForge-${GITHUB_REF_NAME}-linux-x64.tar.gz"

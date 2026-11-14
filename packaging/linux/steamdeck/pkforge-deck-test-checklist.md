@@ -25,7 +25,7 @@
 - [ ] If the UI is tiny: `flatpak override --user --env=PKFORGE_SCALE=2 org.pkforge.app`
 
 ## Smoke tests, in order
-1. App launches, fullscreen in Game Mode. Note any crash; log: `~/.var/app/org.pkforge.app/data/PKForge.App/logs/pkforge.log`
+1. App launches, fullscreen in Game Mode. Note any crash; log: `find ~/.config/PKForge.App ~/.var/app/org.pkforge.app -name pkforge.log`
 2. Controller navigates menus (look for "Controller connected" in the log)
 3. Touch drag scrolls lists; right stick moves Poképark camera
 4. Emulators auto-link (EmuDeck paths). Link mGBA by hand if you use it.

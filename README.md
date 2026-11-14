@@ -275,6 +275,9 @@ locally as above.
 
 #### SteamOS (Steam Deck, Legion Go)
 
+A step-by-step Steam Deck guide, including playing the DS and GBA games in Pokémon Fulldex, is in
+[packaging/linux/steamdeck/README.md](packaging/linux/steamdeck/README.md).
+
 1. Switch to Desktop Mode (Steam button → Power → Switch to Desktop).
 2. Copy `PKForge.flatpak` to the device, for example to Downloads with a USB stick, or over
    the network from Dolphin (`smb://your-pc/your-share`).
@@ -351,7 +354,7 @@ For the folder build, set them before `./pkforge.sh`.
 
 | | Flatpak | Folder build |
 | --- | --- | --- |
-| Bank, backups, settings | `~/.var/app/org.pkforge.app/data/PKForge.App` | `~/.local/share/PKForge.App` |
+| Bank, backups, settings | under `~/.var/app/org.pkforge.app` | `~/.config/PKForge.App` |
 | Log | `…/PKForge.App/logs/pkforge.log` | `…/PKForge.App/logs/pkforge.log` |
 | Shared and exported files | `~/Documents/PKForge` | `~/Documents/PKForge` |
 
