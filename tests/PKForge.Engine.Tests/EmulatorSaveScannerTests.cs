@@ -84,10 +84,11 @@ public sealed class EmulatorSaveScannerTests : IDisposable
     [Fact]
     public async Task FulldexSavesFolderSkipsItsDatedBackups()
     {
-        // Pokémon Fulldex: saves/black.sav plus its own restore points in saves/backups/.
+        // Pokémon Fulldex: saves/black.sav, the copy it makes beside it at every start
+        // (black.sav.prelaunch.bak), and its dated restore points in saves/backups/.
         var save = Write("saves/black.sav", BlackSave());
+        Write("saves/black.sav.prelaunch.bak", BlackSave());
         Write("saves/backups/black-20261101-164500.sav", BlackSave());
-        Write("saves/backups/black.prelaunch.bak", BlackSave());
         Write("saves/fulldex-names.txt", [0x41]);
 
         var scanner = new TestScanner(new MemoryCache(), root => new FileSystemSaveTree(root));

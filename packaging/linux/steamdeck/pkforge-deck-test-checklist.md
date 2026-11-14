@@ -53,4 +53,5 @@ from your cartridges.
 - [ ] PKForge and Fulldex never edit a save at the same time: **QUIT** the game in Fulldex (pause menu) before
       editing in PKForge. Fulldex keeps the save in memory while a game runs and would write over PKForge's edit.
 - [ ] If Fulldex cloud saves are on, keep them off until you've checked an edited save in the game.
-- [ ] Fulldex keeps its own dated copies in `saves/backups/` (its RESTORE BACKUP menu); PKForge skips that folder.
+- [ ] Fulldex keeps its own dated copies in `saves/backups/` (its RESTORE BACKUP menu) and a `<game>.sav.prelaunch.bak`
+      beside each save; PKForge skips both, so each game appears once.

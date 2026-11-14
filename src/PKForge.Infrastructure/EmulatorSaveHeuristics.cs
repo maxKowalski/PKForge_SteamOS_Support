@@ -29,6 +29,9 @@ public static class EmulatorSaveHeuristics
 
     public static bool IsCandidateFileName(string fileName)
     {
+        // Pokémon Fulldex copies each save to <save>.prelaunch.bak beside it whenever a game
+        // starts: the same game a second time, and editing it would change nothing in play.
+        if (fileName.EndsWith(".prelaunch.bak", StringComparison.OrdinalIgnoreCase)) return false;
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         return CandidateExtensions.Contains(extension);
     }
