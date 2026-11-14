@@ -1,5 +1,11 @@
 # PKForge on Steam Deck: test checklist
 
+## Preflight (read-only, changes nothing)
+- [ ] In Desktop Mode (Konsole): `bash deck-preflight.sh` (or `bash deck-preflight.sh ~/pkforge-linux-x64` after unpacking the tarball)
+- [ ] Fix every `[WARN]`, or note it. Paste `~/pkforge-preflight-*.txt` back to Claude if anything is unclear.
+- [ ] A save folder flagged "OUTSIDE the Flatpak's allowed paths" is invisible to the Flatpak: use the tarball build, or grant it with
+      `flatpak override --user --filesystem=<real folder> org.pkforge.app`
+
 ## Before touching anything
 - [ ] Copy your emulator save folders (or whole `~/Emulation/saves`) to a backup, e.g. `cp -a ~/Emulation/saves ~/saves-backup-$(date +%F)`
 - [ ] Test on a COPY of one save first, not your main one. Use File > open a single save.
