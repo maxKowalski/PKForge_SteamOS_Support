@@ -1,6 +1,8 @@
 using System.Text.Json;
+#if ANDROID
 using Android.App;
 using Android.Content.PM;
+#endif
 using PKForge.Domain;
 
 #if ANDROID
@@ -203,6 +205,11 @@ public sealed class AppUpdateService
             || maker.Equals("POCO", StringComparison.OrdinalIgnoreCase)
             || maker.Equals("Redmi", StringComparison.OrdinalIgnoreCase));
 #pragma warning restore CA1416
+#else
+    // Desktop builds update through their package (Flatpak, AppImage), never by themselves.
+    private static bool CanRequestInstalls() => false;
+
+    public static void OpenInstallPermissionSettings() { }
 #endif
 }
 

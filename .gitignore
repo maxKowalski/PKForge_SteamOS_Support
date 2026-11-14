@@ -48,3 +48,7 @@ src/PKForge.App/Resources/Raw/sgdb.key
 /docs/*.md
 dist-diagnostic/
 dist/
+
+# Published desktop build staged for the Flatpak.
+packaging/linux/pkforge-linux-x64/
+packaging/linux/pkforge.flatpak

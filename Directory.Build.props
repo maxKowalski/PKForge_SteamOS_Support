@@ -5,4 +5,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+  <!-- Desktop (Linux/SteamOS) builds: pass -p:PKForgeDesktop=true. The app then targets
+       net11.0 on the Avalonia MAUI backend, which needs SkiaSharp 4, so every project
+       compiles against the same Skia. Android builds are unaffected. -->
+  <PropertyGroup>
+    <PKForgeDesktop Condition="'$(PKForgeDesktop)' == ''">false</PKForgeDesktop>
+    <PKForgeSkiaVersion Condition="'$(PKForgeDesktop)' != 'true'">3.116.1</PKForgeSkiaVersion>
+    <PKForgeSkiaVersion Condition="'$(PKForgeDesktop)' == 'true'">4.151.0</PKForgeSkiaVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(PKForgeDesktop)' == 'true'">
+    <!-- SkiaSharp 4 deprecates SKPath.MoveTo/LineTo and the DrawBitmap overloads without
+         sampling options; they still work. Silenced here until the Android build moves to 4. -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
 </Project>

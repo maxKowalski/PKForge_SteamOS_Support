@@ -14,6 +14,17 @@
     <ApplicationDisplayVersion>3.1.1</ApplicationDisplayVersion>
     <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(PKForgeDesktop)' == 'true'">
+    <!-- Linux/SteamOS: plain net11.0 rendered by the Avalonia MAUI backend. -->
+    <TargetFramework>net11.0</TargetFramework>
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    <!-- Desktop reads its version from the assembly (Desktop/DesktopEssentials.cs: AppInfo). -->
+    <Version>$(ApplicationDisplayVersion)</Version>
+    <!-- Desktop/DesktopGamepad.cs calls SDL2 through LibraryImport. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- SkiaSharp.Views.Maui trimming warnings, as in Avalonia's own samples. -->
+    <NoWarn>$(NoWarn);IL2104;IL2026</NoWarn>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(DiagnosticBuild)' == 'true'">
     <!-- Diagnostic builds install beside production and cannot overwrite its app-private data. -->
     <ApplicationId>org.pkforge.app.debug</ApplicationId>
@@ -28,10 +39,34 @@
     <AndroidStoreUncompressedFileExtensions>.so;$(AndroidStoreUncompressedFileExtensions)</AndroidStoreUncompressedFileExtensions>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.116.1" />
     <PackageReference Include="ZXing.Net" Version="0.16.10" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PKForgeDesktop)' != 'true'">
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
+    <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.116.1" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PKForgeDesktop)' == 'true'">
+    <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.0-rc.2.26505.5" />
+    <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="$(PKForgeSkiaVersion)" />
+    <PackageReference Include="Avalonia.Controls.Maui" Version="11.0.0-rc.3.26301.1434" />
+    <PackageReference Include="Avalonia.Controls.Maui.Desktop" Version="11.0.0-rc.3.26301.1434" />
+    <PackageReference Include="Avalonia.Controls.Maui.Essentials" Version="11.0.0-rc.3.26301.1434" />
+    <PackageReference Include="Avalonia.Controls.Maui.SkiaSharp.Views" Version="11.0.0-rc.3.26301.1434" />
+    <!-- libSDL2 for game controllers (zlib licence), from Silk.NET's native build. -->
+    <PackageReference Include="Ultz.Native.SDL" Version="2.32.10" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PKForgeDesktop)' != 'true'">
+    <!-- Desktop-only platform services. -->
+    <Compile Remove="Desktop/**" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PKForgeDesktop)' == 'true'">
+    <None Update="Desktop/pkforge.sh" Link="pkforge.sh" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(PKForgeDesktop)' == 'true'">
+    <AndroidLinkDescription Remove="Platforms/Android/linker.xml" />
+    <Compile Remove="Platforms/Android/**" />
+    <None Remove="Platforms/Android/**" />
   </ItemGroup>
   <ItemGroup>
     <AndroidLinkDescription Include="Platforms/Android/linker.xml" />

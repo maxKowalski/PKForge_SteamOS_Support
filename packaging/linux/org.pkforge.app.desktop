@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PKForge
+Comment=Pokémon save editor and bank
+Exec=pkforge
+Icon=org.pkforge.app
+Terminal=false
+Categories=Game;Utility;
+Keywords=Pokemon;PKHeX;save;editor;

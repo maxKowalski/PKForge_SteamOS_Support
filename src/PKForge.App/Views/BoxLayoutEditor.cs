@@ -170,7 +170,7 @@ public static class BoxLayoutEditor
                 _tiles[i].Stroke = i == _index ? UiTokens.Rim : Colors.Transparent;
                 _tiles[i].BackgroundColor = i == _index ? UiTokens.SelectFill : UiTokens.ShellPress;
             }
-            _ = _scroll.ScrollToAsync(_tiles[_index], ScrollToPosition.MakeVisible, false);
+            _scroll.MakeVisible(_tiles[_index]);
         }
 
         private void Close(int? result)

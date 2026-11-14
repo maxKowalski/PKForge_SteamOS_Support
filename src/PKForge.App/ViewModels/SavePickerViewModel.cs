@@ -105,6 +105,7 @@ public static class SaveDescriptions
         EmulatorKind.PizzaBoyGba => "Pizza Boy GBA",
         EmulatorKind.PizzaBoyGbc => "Pizza Boy GBC",
         EmulatorKind.CitraMmj => "Citra MMJ",
+        EmulatorKind.MGba => "mGBA",
         _ => kind.ToString(),
     };
 }
@@ -236,6 +237,9 @@ public partial class SavePickerViewModel : ObservableObject
 
     [RelayCommand]
     private Task AddPizzaBoyGbcAsync() => AddRootAndScanAsync(EmulatorKind.PizzaBoyGbc);
+
+    [RelayCommand]
+    private Task AddMGbaAsync() => AddRootAndScanAsync(EmulatorKind.MGba);
 
     [RelayCommand]
     public async Task RescanAsync()
@@ -550,6 +554,8 @@ public partial class SavePickerViewModel : ObservableObject
             "Pick the folder that holds your .sav files: next to your ROMs by default, or the save folder set in melonDS's settings.",
         EmulatorKind.DraStic => "Pick DraStic's backup folder (its .dsv battery saves) or the DraStic data folder.",
         EmulatorKind.Eden => "Pick Eden's files root, the folder that contains its emulated storage.",
+        EmulatorKind.MGba =>
+            "Pick mGBA's save folder (Settings → Paths → Save games; EmuDeck uses Emulation/saves/mgba/saves), or your ROM folder when saves sit beside the ROMs.",
         _ => "Pick the folder that holds your save files.",
     };
 

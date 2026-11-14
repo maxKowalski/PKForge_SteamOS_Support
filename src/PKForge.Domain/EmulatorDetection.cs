@@ -14,6 +14,8 @@ public enum EmulatorKind
     PizzaBoyGbc = 8,
     /// <summary>Citra MMJ (weihuoya fork, org.citra.emu): same SDMC layout as Azahar, rooted at citra-emu/.</summary>
     CitraMmj = 9,
+    /// <summary>Standalone mGBA (GB/GBC/GBA): flat .sav battery saves in its savegamePath, or beside the ROMs.</summary>
+    MGba = 10,
 }
 
 /// <summary>A persistable SAF folder grant, opaque to the domain layer.</summary>

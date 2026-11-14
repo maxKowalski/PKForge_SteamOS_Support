@@ -133,7 +133,7 @@ public sealed class PadMenu : IPadHandler
             _optionViews[i].Selected = i == _index;
         // Tall menus scroll; the highlight must ride along or the cursor vanishes
         // below the fold.
-        _scroll?.ScrollToAsync(_optionViews[_index], ScrollToPosition.MakeVisible, animated: false);
+        _scroll?.MakeVisible(_optionViews[_index]);
     }
     private void Close(string? result)
     {

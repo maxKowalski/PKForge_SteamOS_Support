@@ -2,9 +2,10 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [main, linux-trial, 'claude/**']
     tags: ['v*']
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test-and-build:
@@ -86,3 +87,70 @@ jobs:
         with:
           files: PKForge-${{ github.ref_name }}.apk
           generate_release_notes: true
+
+  # Linux / SteamOS: the desktop build on the Avalonia MAUI backend (-p:PKForgeDesktop=true).
+  linux-desktop:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 11.0.x
+          # Avalonia.Controls.Maui needs .NET 11; drop once 11.0 is GA.
+          dotnet-quality: preview
+      - name: Install MAUI workload
+        # On Linux the base MAUI build targets come with maui-tizen.
+        run: dotnet workload install maui-tizen
+      - name: Publish
+        run: >
+          dotnet publish src/PKForge.App/PKForge.App.csproj -p:PKForgeDesktop=true
+          -c Release -r linux-x64 --self-contained -o packaging/linux/pkforge-linux-x64
+      - name: Pack
+        # A tarball keeps the executable bits that workflow artifacts drop.
+        run: tar -C packaging/linux -czf pkforge-linux-x64.tar.gz pkforge-linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkforge-linux-x64
+          path: pkforge-linux-x64.tar.gz
+          retention-days: 30  # the Steam Deck guide downloads it from here
+      - name: Stage release asset
+        if: github.ref_type == 'tag'
+        run: cp pkforge-linux-x64.tar.gz "PKForge-${GITHUB_REF_NAME}-linux-x64.tar.gz"
+      - name: Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PKForge-${{ github.ref_name }}-linux-x64.tar.gz
+
+  flatpak:
+    needs: linux-desktop
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkforge-linux-x64
+      - name: Unpack
+        run: tar -C packaging/linux -xzf pkforge-linux-x64.tar.gz
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: PKForge.flatpak
+          manifest-path: packaging/linux/org.pkforge.app.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+      - name: Stage release asset
+        if: github.ref_type == 'tag'
+        run: cp PKForge.flatpak "PKForge-${GITHUB_REF_NAME}.flatpak"
+      - name: Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PKForge-${{ github.ref_name }}.flatpak

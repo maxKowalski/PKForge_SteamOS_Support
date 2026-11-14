@@ -4,11 +4,16 @@ using PKForge.Domain;
 namespace PKForge.Infrastructure;
 
 /// <summary>Validates candidate bytes, creates a backup, and performs one platform write in that order.</summary>
+/// <param name="verifyOnDiskBeforeWrite">Re-reads the save just before writing and refuses when it no
+/// longer matches the bytes PKForge last read or wrote. On desktop an emulator can run beside PKForge
+/// and flush its battery save at any time; without this check an edit would silently overwrite that
+/// newer progress, and the restore point would hold only the older copy.</param>
 public sealed class SafeSaveWriter(
     ISaveEngine engine,
     IBackupService backups,
     ISaveFileAccess access,
-    ISaveIdentityStore? identities = null) : ISafeSaveWriter
+    ISaveIdentityStore? identities = null,
+    bool verifyOnDiskBeforeWrite = false) : ISafeSaveWriter
 {
     private readonly HashSet<string> _confirmedLayoutRisk = new(StringComparer.Ordinal);
     private readonly Lock _gate = new();
@@ -139,6 +144,9 @@ public sealed class SafeSaveWriter(
                 throw new UnsafeSaveWriteException($"Write refused: {unsafeDiff} The original was not touched.");
         }
 
+        if (verifyOnDiskBeforeWrite)
+            await EnsureUnchangedOnDiskAsync(documentId, original, cancellationToken).ConfigureAwait(false);
+
         var backup = await backups.CreateAsync(original, changeDescription, documentId, cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         await access.WriteAtomicallyAsync(documentId, candidate, cancellationToken).ConfigureAwait(false);
@@ -155,5 +163,26 @@ public sealed class SafeSaveWriter(
             Convert.ToHexString(SHA256.HashData(original.OriginalBytes.Span)),
             Convert.ToHexString(SHA256.HashData(candidate.Span)),
             DateTimeOffset.UtcNow);
+    }
+
+    /// <summary>Refuses the write when the file on disk is no longer the baseline this edit was
+    /// made against, so an emulator's newer save is never overwritten. Reopening the save in
+    /// PKForge makes the current file the baseline again; restores work the same way.</summary>
+    private async ValueTask EnsureUnchangedOnDiskAsync(string documentId, SaveSnapshot original, CancellationToken cancellationToken)
+    {
+        ReadOnlyMemory<byte> onDisk;
+        try
+        {
+            onDisk = await access.ReadAsync(documentId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            throw new UnsafeSaveWriteException(
+                $"Write refused: the save could not be re-read before writing ({error.Message}). The original was not touched.");
+        }
+        if (!onDisk.Span.SequenceEqual(original.OriginalBytes.Span))
+            throw new UnsafeSaveWriteException(
+                "Write refused: the save changed on disk after PKForge opened it, most likely because the emulator saved. " +
+                "Close the game in the emulator, reopen the save in PKForge, and make the change again. Nothing was written.");
     }
 }

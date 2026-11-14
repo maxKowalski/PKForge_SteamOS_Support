@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.pkforge.app</id>
+  <name>PKForge</name>
+  <summary>Pokémon save editor and bank</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <description>
+    <p>
+      A Pokémon save editor and cross-generation Bank built on PKHeX.Core, with the Auto
+      Legality Mod built in. It finds saves from RetroArch, Dolphin, Azahar, Eden, EmuDeck and
+      RetroDECK, and plays with a controller or by touch.
+    </p>
+    <p>Not affiliated with Nintendo, Game Freak, or The Pokémon Company.</p>
+  </description>
+  <launchable type="desktop-id">org.pkforge.app.desktop</launchable>
+  <url type="homepage">https://github.com/sofianeelhor/PKForge</url>
+  <content_rating type="oars-1.1" />
+  <supports>
+    <control>gamepad</control>
+    <control>touch</control>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <releases>
+    <release version="3.1.1" date="2026-10-16" />
+  </releases>
+</component>

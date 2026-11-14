@@ -614,7 +614,7 @@ public sealed partial class BoxBrowserPage : ContentPage, IPadPagingHandler, IPa
         }
 
         if (_editorScroll is not null)
-            _ = _editorScroll.ScrollToAsync(focused.View, ScrollToPosition.MakeVisible, false);
+            _editorScroll.MakeVisible(focused.View);
     }
 
     private sealed record EditorFocusTarget(View View, string Caption, Func<Task> Activate,
@@ -3266,7 +3266,7 @@ public sealed partial class BoxBrowserPage : ContentPage, IPadPagingHandler, IPa
                 preset.BackgroundColor = _cursor == _itemRows.Count + 1 ? UiTokens.ChoiceFillPress : UiTokens.ChoiceFill;
             var target = _cursor < _itemRows.Count ? (View)_itemRows[_cursor]
                 : _cursor == _itemRows.Count ? _addRow : _presetRow;
-            _ = _scroll.ScrollToAsync(target, ScrollToPosition.MakeVisible, false);
+            _scroll.MakeVisible(target);
         }
 
         public bool OnPadButton(PadButton button)
