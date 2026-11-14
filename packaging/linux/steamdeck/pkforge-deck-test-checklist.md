@@ -55,3 +55,7 @@ from your cartridges.
 - [ ] If Fulldex cloud saves are on, keep them off until you've checked an edited save in the game.
 - [ ] Fulldex keeps its own dated copies in `saves/backups/` (its RESTORE BACKUP menu) and a `<game>.sav.prelaunch.bak`
       beside each save; PKForge skips both, so each game appears once.
+- [ ] **Game Mode window test** (decides whether PKForge can get a "Play in Fulldex" button): add
+      `gamemode-window-test.sh` as a non-Steam game, start it in Game Mode, and note: does Fulldex come up on top,
+      does the controller work in it, and does the stand-in window come back after quitting Fulldex?
+      The log goes to `~/pkforge-gamemode-window-test.txt`.
