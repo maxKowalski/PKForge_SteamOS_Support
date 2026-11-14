@@ -27,6 +27,8 @@ finish-args:
   - --filesystem=xdg-data/citra-emu
   - --filesystem=xdg-data/eden
   - --filesystem=~/.var/app/dev.eden_emu.eden
+  # Pokémon Fulldex (AppImage): its saves folder only, not its ROMs or settings.
+  - --filesystem=xdg-data/pokemon-ds-wide/saves
   - --filesystem=~/Emulation
   - --filesystem=~/retrodeck
   # SD cards on SteamOS, where EmuDeck can keep its saves.

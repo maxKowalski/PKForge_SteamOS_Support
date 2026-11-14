@@ -149,9 +149,12 @@ public abstract class EmulatorSaveScanner(ISaveEngine engine, IScanCacheStore ca
 
     // RetroArch keeps ROMs apart from its saves folder, so skipping "roms" keeps a whole-folder
     // grant fast. Standalone emulators (melonDS, DraStic, Pizza Boy...) save beside the ROM.
+    // Pokémon Fulldex (melonDS core) keeps dated copies of each save in saves/backups/; they are
+    // its restore points, not saves to edit, and would list every game several times over.
     private static bool IsPruned(string folder, EmulatorKind kind) =>
-        PrunedDirectories.Contains(folder)
-        && (kind == EmulatorKind.RetroArch || !string.Equals(folder, "roms", StringComparison.OrdinalIgnoreCase));
+        (PrunedDirectories.Contains(folder)
+            && (kind == EmulatorKind.RetroArch || !string.Equals(folder, "roms", StringComparison.OrdinalIgnoreCase)))
+        || (kind == EmulatorKind.MelonDS && string.Equals(folder, "backups", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Battery saves and GCI files can be nested: RetroArch uses per-core folders,

@@ -39,3 +39,18 @@ No music, no second-screen inspector, no Poképark widget, no in-app update, Sha
 
 ## Report back
 Save the log and note which step failed, game/emulator, and SteamOS version.
+
+## Playing DS and GBA games with Pokémon Fulldex (optional)
+[Pokémon Fulldex](https://github.com/mamesj/pokemon-fulldex) plays Black/White, Black 2/White 2,
+HeartGold/SoulSilver, Platinum, Diamond/Pearl and the GBA games in one widescreen picture
+(melonDS and mGBA built in). It ships its own Steam Deck build; you bring your own ROMs dumped
+from your cartridges.
+- [ ] Install the **AppImage** with Gear Lever (Discover > Gear Lever). Its ROMs, saves and settings go
+      in `~/.local/share/pokemon-ds-wide`, the folder PKForge finds by itself. (The tarball works too, but
+      keeps its saves beside the program: link that `saves` folder by hand in PKForge, as melonDS.)
+- [ ] Put your ROMs in its `roms` folder (**O** in its game list opens it), add it to Steam, set 3D RESOLUTION to 720P.
+- [ ] To carry on a save from another emulator, copy it in as `black2.sav`, `soulsilver.sav`, `platinum.sav` ...
+- [ ] PKForge and Fulldex never edit a save at the same time: **QUIT** the game in Fulldex (pause menu) before
+      editing in PKForge. Fulldex keeps the save in memory while a game runs and would write over PKForge's edit.
+- [ ] If Fulldex cloud saves are on, keep them off until you've checked an edited save in the game.
+- [ ] Fulldex keeps its own dated copies in `saves/backups/` (its RESTORE BACKUP menu); PKForge skips that folder.

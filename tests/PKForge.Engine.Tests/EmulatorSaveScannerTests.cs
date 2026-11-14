@@ -82,6 +82,23 @@ public sealed class EmulatorSaveScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task FulldexSavesFolderSkipsItsDatedBackups()
+    {
+        // Pokémon Fulldex: saves/black.sav plus its own restore points in saves/backups/.
+        var save = Write("saves/black.sav", BlackSave());
+        Write("saves/backups/black-20261101-164500.sav", BlackSave());
+        Write("saves/backups/black.prelaunch.bak", BlackSave());
+        Write("saves/fulldex-names.txt", [0x41]);
+
+        var scanner = new TestScanner(new MemoryCache(), root => new FileSystemSaveTree(root));
+        var result = await scanner.ScanAsync(Path.Combine(_root, "saves"), EmulatorKind.MelonDS);
+
+        var found = Assert.Single(result.Saves);
+        Assert.Equal(save, found.DocumentId);
+        Assert.Equal(EmulatorKind.MelonDS, found.Emulator);
+    }
+
+    [Fact]
     public async Task UnchangedFilesAreAnsweredFromTheCacheOnTheNextScan()
     {
         Write("saves/Pokemon Black.sav", BlackSave());

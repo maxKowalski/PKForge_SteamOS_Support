@@ -65,7 +65,7 @@ ls /dev/hidraw* >/dev/null 2>&1 && ok "hidraw devices present (SDL reads the Dec
     || warn "No /dev/hidraw devices"
 
 section "Running emulators (must be closed while PKForge writes)"
-running=$(pgrep -af 'retroarch|dolphin-emu|azahar|citra|lime3ds|eden|melonds|mgba|desmume' 2>/dev/null | grep -v pgrep)
+running=$(pgrep -af 'retroarch|dolphin-emu|azahar|citra|lime3ds|eden|melonds|mgba|desmume|pokemon-ds-wide' 2>/dev/null | grep -v pgrep)
 [ -n "$running" ] && { warn "Emulators running now:"; echo "$running" | sed 's/^/         /'; } || ok "No emulator running"
 
 # Folders the Flatpak may read (packaging/linux/org.pkforge.app.yml). A save whose real
@@ -77,6 +77,7 @@ FLATPAK_ALLOWED=(
     "$HOME/.local/share/azahar-emu" "$HOME/.var/app/org.azahar_emu.Azahar"
     "$HOME/.local/share/lime3ds-emu" "$HOME/.local/share/citra-emu"
     "$HOME/.local/share/eden" "$HOME/.var/app/dev.eden_emu.eden"
+    "$HOME/.local/share/pokemon-ds-wide/saves"
     "$HOME/Emulation" "$HOME/retrodeck" "/run/media"
 )
 in_sandbox() {
@@ -96,6 +97,7 @@ CANDIDATES=(
     ".local/share/azahar-emu" ".var/app/org.azahar_emu.Azahar/data/azahar-emu"
     ".local/share/lime3ds-emu" ".local/share/citra-emu"
     ".local/share/eden" ".var/app/dev.eden_emu.eden/data/eden"
+    ".local/share/pokemon-ds-wide/saves"
     "Emulation/saves/retroarch" "Emulation/saves/melonds" "Emulation/saves/dolphin"
     "Emulation/saves/azahar" "Emulation/saves/citra" "Emulation/saves/eden" "retrodeck/saves"
 )
@@ -114,8 +116,42 @@ for p in "$HOME/.config/mgba" "$HOME/.var/app/io.mgba.mGBA" "$HOME/Emulation/sav
     [ -e "$p" ] && info "mGBA folder $p (not auto-detected; link it by hand in PKForge)"
 done
 
+section "Pokémon Fulldex"
+fulldex_dirs=()
+[ -d "$HOME/.local/share/pokemon-ds-wide" ] && fulldex_dirs+=("$HOME/.local/share/pokemon-ds-wide")
+while IFS= read -r exe; do fulldex_dirs+=("$(dirname "$exe")"); done < <(
+    find "$HOME" -maxdepth 4 -type f -name pokemon-ds-wide -perm -u+x 2>/dev/null)
+while IFS= read -r img; do info "AppImage: $img"; done < <(
+    find "$HOME" -maxdepth 4 -type f -name 'pokemon-ds-wide*.AppImage' 2>/dev/null)
+if [ ${#fulldex_dirs[@]} = 0 ]; then
+    info "Not installed (AppImage data folder ~/.local/share/pokemon-ds-wide not found, no tarball found)"
+fi
+for d in "${fulldex_dirs[@]}"; do
+    saves="$d/saves"
+    custom=$(sed -n 's/^saves_folder[[:space:]]*=[[:space:]]*//p' "$d/settings.cfg" 2>/dev/null | head -1)
+    [ -n "$custom" ] && saves="$custom" && info "$d/settings.cfg sets saves_folder=$custom"
+    info "Fulldex folder: $d"
+    if [ -d "$saves" ]; then
+        n=$(find "$saves" -maxdepth 1 -type f -iname '*.sav' | wc -l)
+        b=$(find "$saves/backups" -type f 2>/dev/null | wc -l)
+        info "  saves: $saves ($n saves, $b Fulldex backups)"
+        find "$saves" -maxdepth 1 -type f -iname '*.sav' -printf '         %f  %s bytes  %TY-%Tm-%Td %TH:%TM\n' 2>/dev/null
+        real=$(readlink -f "$saves")
+        in_sandbox "$real" && ok "  the PKForge Flatpak can see these saves" \
+            || warn "  the PKForge Flatpak cannot see $real: use the tarball build, or flatpak override --user --filesystem=$real org.pkforge.app"
+        [ "$real" = "$(readlink -f "$HOME/.local/share/pokemon-ds-wide/saves")" ] \
+            && ok "  PKForge finds this folder by itself" \
+            || info "  link this folder by hand in PKForge (as melonDS)"
+    else
+        info "  no saves folder yet (start a game in Fulldex once)"
+    fi
+    provider=$(sed -n 's/^provider[[:space:]]*=[[:space:]]*//p' "$d/cloud.ini" 2>/dev/null | head -1)
+    [ -n "$provider" ] && [ "$provider" != off ] \
+        && warn "  Fulldex cloud saves are on ($provider): a save PKForge edits is uploaded the next time the game ends there; keep sync off until the edit is checked"
+done
+
 section "Save files found (the ones to back up before testing)"
-for root in "$HOME/Emulation/saves" "$HOME/retrodeck/saves" "$HOME/.config/retroarch/saves" \
+for root in "$HOME/Emulation/saves" "$HOME/retrodeck/saves" "$HOME/.config/retroarch/saves" "$HOME/.local/share/pokemon-ds-wide/saves" \
             "$HOME/.var/app/org.libretro.RetroArch/config/retroarch/saves" /run/media/*/Emulation/saves /run/media/*/*/Emulation/saves; do
     [ -d "$root" ] || continue
     n=$(find -L "$root" -type f \( -iname '*.srm' -o -iname '*.sav' -o -iname '*.dsv' -o -iname '*.dat' -o -name main \) 2>/dev/null | wc -l)

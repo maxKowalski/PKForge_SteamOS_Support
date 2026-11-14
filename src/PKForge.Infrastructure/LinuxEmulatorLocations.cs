@@ -7,8 +7,9 @@ public sealed record FoundEmulatorFolder(EmulatorKind Kind, string Path, string 
 
 /// <summary>
 /// Where Linux and SteamOS installs keep emulator data: native packages, Flatpaks, Steam's
-/// RetroArch, EmuDeck (~/Emulation/saves) and RetroDECK (~/retrodeck/saves). Each folder is
-/// given whole; the scanner already narrows a data folder down to its saves.
+/// RetroArch, Pokémon Fulldex (its AppImage; a tarball keeps saves beside the program and is
+/// linked by hand), EmuDeck (~/Emulation/saves) and RetroDECK (~/retrodeck/saves). Each folder
+/// is given whole; the scanner already narrows a data folder down to its saves.
 /// </summary>
 public static class LinuxEmulatorLocations
 {
@@ -27,6 +28,9 @@ public static class LinuxEmulatorLocations
         (EmulatorKind.Azahar, ".local/share/citra-emu", "Citra"),
         (EmulatorKind.Eden, ".local/share/eden", "Eden"),
         (EmulatorKind.Eden, ".var/app/dev.eden_emu.eden/data/eden", "Eden (Flatpak)"),
+        // Pokémon Fulldex runs the melonDS core (and mGBA) and writes plain battery saves
+        // (black2.sav, emerald.sav) into this folder.
+        (EmulatorKind.MelonDS, ".local/share/pokemon-ds-wide/saves", "Pokémon Fulldex"),
         (EmulatorKind.RetroArch, "Emulation/saves/retroarch", "RetroArch (EmuDeck)"),
         (EmulatorKind.MelonDS, "Emulation/saves/melonds", "melonDS (EmuDeck)"),
         (EmulatorKind.Dolphin, "Emulation/saves/dolphin", "Dolphin (EmuDeck)"),

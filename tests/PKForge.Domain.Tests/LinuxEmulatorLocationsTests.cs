@@ -25,6 +25,19 @@ public sealed class LinuxEmulatorLocationsTests : IDisposable
     }
 
     [Fact]
+    public void FindsPokemonFulldexAppImageSaves()
+    {
+        Folder(".local/share/pokemon-ds-wide/saves");
+        Folder(".local/share/pokemon-ds-wide/roms");
+
+        var only = Assert.Single(LinuxEmulatorLocations.Find(_home, []));
+
+        Assert.Equal(EmulatorKind.MelonDS, only.Kind);
+        Assert.Equal("Pokémon Fulldex", only.DisplayName);
+        Assert.Equal(Path.Combine(_home, ".local/share/pokemon-ds-wide/saves"), only.Path);
+    }
+
+    [Fact]
     public void EmuDeckLinkIntoAnEmulatorFolderIsNotListedTwice()
     {
         if (!OperatingSystem.IsLinux()) return; // symlinks need no privilege only on Linux
