@@ -77,7 +77,14 @@ public static class MauiProgram
             sp.GetRequiredService<ISaveFileAccess>(), sp.GetRequiredService<ISaveEngine>(),
             sp.GetRequiredService<ISaveIdentityStore>()));
         builder.Services.AddSingleton<Services.ProtectionStore>();
-        builder.Services.AddSingleton<ISafeSaveWriter, SafeSaveWriter>();
+        // On desktop an emulator can rewrite the save while PKForge has it open: re-check the
+        // file before every write so that newer progress is never overwritten.
+        builder.Services.AddSingleton<ISafeSaveWriter>(sp => new SafeSaveWriter(
+            sp.GetRequiredService<ISaveEngine>(),
+            sp.GetRequiredService<IBackupService>(),
+            sp.GetRequiredService<ISaveFileAccess>(),
+            sp.GetRequiredService<ISaveIdentityStore>(),
+            verifyOnDiskBeforeWrite: !OperatingSystem.IsAndroid()));
         builder.Services.AddSingleton<ILegalityService, LegalityService>();
         builder.Services.AddSingleton<ILegalityAssistService>(LegalityAssistService.Shared);
         builder.Services.AddSingleton<IStatPreviewService, StatPreviewService>();

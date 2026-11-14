@@ -72,6 +72,61 @@ public sealed class SafeSaveWriterTests
         Assert.Equal("Edit Garchomp (Box 3, Slot 12)", backup.LastDescription);
     }
 
+    [Fact]
+    public async Task VerifiedWriteProceedsWhenTheFileIsStillTheBaseline()
+    {
+        var backup = new FakeBackupService();
+        var access = new FakeFileAccess { OnDisk = [1, 2, 3] };
+        var writer = new SafeSaveWriter(new FakeSaveEngine(valid: true), backup, access, verifyOnDiskBeforeWrite: true);
+
+        var receipt = await writer.WriteAsync("/saves/game.sav", Snapshot(new byte[] { 1, 2, 3 }), new byte[] { 4, 5, 6 });
+
+        Assert.True(receipt.Changed);
+        Assert.Equal(1, backup.Calls);
+        Assert.Equal(1, access.Writes);
+    }
+
+    [Fact]
+    public async Task VerifiedWriteRefusesWhenTheEmulatorSavedInBetween()
+    {
+        var backup = new FakeBackupService();
+        var access = new FakeFileAccess { OnDisk = [1, 2, 9] };
+        var writer = new SafeSaveWriter(new FakeSaveEngine(valid: true), backup, access, verifyOnDiskBeforeWrite: true);
+
+        var refusal = await Assert.ThrowsAsync<UnsafeSaveWriteException>(() =>
+            writer.WriteAsync("/saves/game.sav", Snapshot(new byte[] { 1, 2, 3 }), new byte[] { 4, 5, 6 }).AsTask());
+
+        Assert.Contains("changed on disk", refusal.Message);
+        Assert.False(refusal.RequiresConfirmation);
+        Assert.Equal(0, backup.Calls);
+        Assert.Equal(0, access.Writes);
+    }
+
+    [Fact]
+    public async Task VerifiedRestoreAlsoRefusesOverANewerFile()
+    {
+        var access = new FakeFileAccess { OnDisk = [7, 7, 7] };
+        var writer = new SafeSaveWriter(new FakeSaveEngine(valid: true), new FakeBackupService(), access, verifyOnDiskBeforeWrite: true);
+
+        await Assert.ThrowsAsync<UnsafeSaveWriteException>(() =>
+            writer.WriteScopedAsync("/saves/game.sav", Snapshot(new byte[] { 1, 2, 3 }), new byte[] { 4, 5, 6 },
+                WriteScope.Everything).AsTask());
+
+        Assert.Equal(0, access.Writes);
+    }
+
+    [Fact]
+    public async Task VerifiedWriteRefusesWhenTheFileCannotBeReRead()
+    {
+        var access = new FakeFileAccess { ReadFailure = new FileNotFoundException("gone") };
+        var writer = new SafeSaveWriter(new FakeSaveEngine(valid: true), new FakeBackupService(), access, verifyOnDiskBeforeWrite: true);
+
+        await Assert.ThrowsAsync<UnsafeSaveWriteException>(() =>
+            writer.WriteAsync("/saves/game.sav", Snapshot(new byte[] { 1, 2, 3 }), new byte[] { 4, 5, 6 }).AsTask());
+
+        Assert.Equal(0, access.Writes);
+    }
+
     private sealed class FakeSaveEngine(bool valid) : ISaveEngine
     {
         public SaveSnapshot Open(ReadOnlyMemory<byte> bytes, string? displayName = null) => throw new NotImplementedException();
@@ -108,7 +163,13 @@ public sealed class SafeSaveWriterTests
         public int Writes { get; private set; }
         public int WriteOrder { get; private set; } = -1;
 
-        public ValueTask<ReadOnlyMemory<byte>> ReadAsync(string documentId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public byte[]? OnDisk { get; init; }
+        public Exception? ReadFailure { get; init; }
+
+        public ValueTask<ReadOnlyMemory<byte>> ReadAsync(string documentId, CancellationToken cancellationToken = default) =>
+            ReadFailure is { } failure ? throw failure
+            : OnDisk is { } bytes ? ValueTask.FromResult<ReadOnlyMemory<byte>>(bytes)
+            : throw new NotImplementedException();
         public ValueTask WriteAtomicallyAsync(string documentId, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
         {
             Writes++;
